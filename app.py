@@ -14,7 +14,7 @@ from streamlit_mic_recorder import mic_recorder
 # 1. CONFIGURATION & ROYAL THEME
 # ==========================================
 st.set_page_config(
-    page_title="SAMRION VANI OMEGA",
+    page_title="VANI",
     page_icon="🎙️",
     layout="wide"
 )
@@ -188,11 +188,11 @@ def read_smrv_file(uploaded_file):
 # ==========================================
 # 4. MAIN INTERFACE
 # ==========================================
-st.title("🎙️ VANI OMEGA")
+st.title(" VANI ")
 st.markdown("### The Royal Voice Ecosystem")
 
 # TABS FOR MODES
-tab_std, tab_clone, tab_god = st.tabs(["🗣️ Vani Standard (20 Voices)", "🧬 God Mode (Cloning)", "💾 Soul Manager"])
+tab_std, tab_clone, tab_god = st.tabs([" Vani", "Cloning", "💾 Voice Manager"])
 
 # === TAB 1: STANDARD (EdgeTTS - 20 Voices) ===
 with tab_std:
