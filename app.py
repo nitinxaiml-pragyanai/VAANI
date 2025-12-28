@@ -5,8 +5,10 @@ import io
 import json
 import zipfile
 import random
-from elevenlabs.client import ElevenLabs
 from streamlit_mic_recorder import mic_recorder
+
+# If you have the elevenlabs library installed, uncomment below
+# from elevenlabs.client import ElevenLabs
 
 # ==========================================
 # 1. CONFIGURATION & ROYAL THEME
@@ -17,7 +19,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# THE ULTRA-PREMIUM CSS PATCH
+# === THE ROYAL BLUE & RED CSS PATCH ===
 st.markdown("""
 <style>
     /* 1. GLOBAL FONT & COLOR */
@@ -26,87 +28,93 @@ st.markdown("""
         color: #ffffff !important;
     }
 
-    /* 2. BACKGROUND: ROYAL IMPERIAL BLUE */
+    /* 2. BACKGROUND: ROYAL BLUE THEME */
     .stApp {
-        background: linear-gradient(135deg, #001f3f 0%, #003366 50%, #00509e 100%);
+        background: linear-gradient(135deg, #020024 0%, #090979 35%, #00d4ff 100%); /* Fallback */
+        background: linear-gradient(to bottom right, #001540, #002d72, #001540); /* Deep Royal Blue */
         background-attachment: fixed;
     }
 
-    /* 3. INPUTS (Glass Style) */
+    /* 3. INPUTS (Glass Style - Dark Blue) */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-        background-color: rgba(0, 0, 0, 0.4) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background-color: rgba(0, 20, 60, 0.6) !important; /* Dark Royal Blue */
+        border: 1px solid #ff0000; /* Red Border */
         color: white !important;
-        border-radius: 10px;
+        border-radius: 8px;
     }
     
-    /* 4. DROPDOWN MENUS (The "White Box" Fix) */
-    /* This forces the selector box to be dark */
+    /* 4. DROPDOWN MENUS (Fixing White Box) */
     div[data-baseweb="select"] > div {
-        background-color: rgba(0, 0, 0, 0.4) !important;
+        background-color: rgba(0, 20, 60, 0.8) !important;
         color: white !important;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid #ff0000;
     }
-    /* This forces the popup list to be Dark Blue */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul {
-        background-color: #001f3f !important;
-    }
-    li[role="option"] {
-        color: white !important;
-        background-color: transparent !important;
+        background-color: #001540 !important; /* Menu Background */
     }
     li[role="option"]:hover {
-        background-color: #ff007f !important; /* Pink Highlight */
+        background-color: #D60000 !important; /* Red Highlight */
     }
 
-    /* 5. TABS (The "Ugly Rectangle" Fix) */
-    /* Remove the default ugly line */
+    /* 5. TABS (Royal Blue & Red) */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
-        background-color: rgba(0,0,0,0.2);
+        background-color: rgba(0,0,0,0.3);
         padding: 10px 20px;
-        border-radius: 30px; /* Pill Shape */
+        border-radius: 30px;
         border: 1px solid rgba(255,255,255,0.1);
     }
-    /* Style the individual tabs */
     .stTabs [data-baseweb="tab"] {
         height: 50px;
-        white-space: pre-wrap;
         background-color: transparent;
         border-radius: 20px;
         color: white;
         font-weight: 600;
         border: none;
     }
-    /* The Active Tab (Pink Pill) */
+    /* The Active Tab (Red Pill) */
     .stTabs [aria-selected="true"] {
-        background-color: #ff007f !important;
-        color: white !important;
-        box-shadow: 0 0 15px rgba(255, 0, 127, 0.5);
+        background-color: #D60000 !important; /* Royal Red */
+        box-shadow: 0 0 15px rgba(214, 0, 0, 0.6);
     }
 
-    /* 6. BUTTONS (ROYAL RED / PINK GRADIENT) */
+    /* 6. BUTTONS (ROYAL RED GRADIENT) */
     div.stButton > button {
-        background: linear-gradient(90deg, #ff007f, #ff4081) !important;
+        background: linear-gradient(90deg, #D60000, #ff4d4d) !important;
         border: none !important;
         color: white !important;
         font-weight: bold !important;
         border-radius: 8px !important;
         transition: 0.3s;
-        box-shadow: 0 4px 15px rgba(255, 0, 127, 0.3);
+        box-shadow: 0 4px 15px rgba(214, 0, 0, 0.4);
     }
     div.stButton > button:hover {
         transform: scale(1.02);
-        box-shadow: 0 0 20px #ff007f;
+        box-shadow: 0 0 20px #ff0000;
+    }
+
+    /* 7. FILE UPLOADER FIX (Screenshot 1 Fix) */
+    [data-testid='stFileUploader'] {
+        background-color: rgba(0, 20, 60, 0.5);
+        border: 1px dashed #ff0000;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    [data-testid='stFileUploader'] section {
+        background-color: transparent !important; /* Removes the white box */
+    }
+    [data-testid='stFileUploader'] button {
+         background: transparent !important;
+         border: 1px solid white !important;
     }
 
     /* FOOTER */
     .footer {
         position: fixed; left: 0; bottom: 0; width: 100%;
-        background: rgba(0, 31, 63, 0.9); backdrop-filter: blur(10px);
+        background: rgba(0, 21, 64, 0.95);
         color: rgba(255,255,255,0.7); text-align: center;
         padding: 12px; font-size: 11px; letter-spacing: 1px; z-index: 999;
-        border-top: 1px solid rgba(255,255,255,0.1);
+        border-top: 1px solid #D60000;
     }
     #MainMenu, footer, header {visibility: hidden;}
     
@@ -114,7 +122,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. VOICE DATABASE
+# 2. VOICE DATABASE (20 VOICES)
 # ==========================================
 FREE_VOICES = {
     "🇮🇳 India - Prabhat (Male)": "en-IN-PrabhatNeural",
@@ -139,13 +147,13 @@ FREE_VOICES = {
     "🇮🇳 Hindi - Madhur": "hi-IN-MadhurNeural"
 }
 
-# THE PHONETIC SCRIPT (To crack the voice style)
+# THE PHONETIC SCRIPT
 CALIBRATION_SENTENCES = [
-    "1. The quick brown fox jumps over the lazy dog. (Captures Speed)",
-    "2. Sphinx of black quartz, judge my vow. (Captures Pitch)",
-    "3. How vexingly quick daft zebras jump! (Captures Accent)",
-    "4. Pack my box with five dozen liquor jugs. (Captures Depth)",
-    "5. I am recording my voice for the Samrion Neural Engine. (Captures Identity)"
+    "1. The quick brown fox jumps over the lazy dog.",
+    "2. Sphinx of black quartz, judge my vow.",
+    "3. How vexingly quick daft zebras jump!",
+    "4. Pack my box with five dozen liquor jugs.",
+    "5. I am recording my voice for the Samrion Neural Engine."
 ]
 
 # ==========================================
@@ -181,10 +189,10 @@ def read_smrv_file(uploaded_file):
 # 4. MAIN INTERFACE
 # ==========================================
 st.title("🎙️ VANI OMEGA")
-st.markdown("### The Ultimate Voice Ecosystem")
+st.markdown("### The Royal Voice Ecosystem")
 
 # TABS FOR MODES
-tab_std, tab_clone, tab_god = st.tabs(["🗣️ Vani Standard", "🧬 God Mode (Cloning)", "💾 Soul Manager"])
+tab_std, tab_clone, tab_god = st.tabs(["🗣️ Vani Standard (20 Voices)", "🧬 God Mode (Cloning)", "💾 Soul Manager"])
 
 # === TAB 1: STANDARD (EdgeTTS - 20 Voices) ===
 with tab_std:
@@ -197,7 +205,8 @@ with tab_std:
     
     with c2:
         st.markdown("#### 🎛️ Settings")
-        selected_voice = st.selectbox("Choose Voice Model", list(FREE_VOICES.keys()))
+        # Ensure label matches the request
+        selected_voice = st.selectbox("Choose Voice Model (20 Available)", list(FREE_VOICES.keys()))
         voice_code = FREE_VOICES[selected_voice]
         
         rate = st.slider("Speed", -50, 50, 0, key="std_rate")
@@ -218,74 +227,92 @@ with tab_clone:
     
     api_key = get_eleven_key()
     if not api_key:
-        st.error("⚠️ God Mode requires an ElevenLabs API Key in secrets.")
-    else:
-        client = ElevenLabs(api_key=api_key)
+        st.warning("⚠️ God Mode requires an ElevenLabs API Key in secrets.")
+    
+    # We define layout regardless of key to show UI
+    c_rec, c_set = st.columns(2)
+    with c_rec:
+        st.markdown("#### 1. Phonetic Calibration")
+        st.info("⚠️ READ THIS EXACTLY to crack your voice style:")
         
-        c_rec, c_set = st.columns(2)
-        with c_rec:
-            st.markdown("#### 1. Phonetic Calibration")
-            st.info("⚠️ READ THIS EXACTLY to crack your voice style:")
-            
-            # THE NEW CALIBRATION BOX
-            calibration_text = "\n".join(CALIBRATION_SENTENCES)
-            st.code(calibration_text, language="text")
-            
-            st.markdown("---")
-            audio = mic_recorder(start_prompt="🔴 RECORD CALIBRATION", stop_prompt="⏹️ STOP", key='recorder')
-            if audio: 
-                st.audio(audio['bytes'])
-                st.success("✅ Voice Sample Captured")
-            
-        with c_set:
-            st.markdown("#### 2. Forge Identity")
-            v_name = st.text_input("Voice Name", placeholder="e.g. Nitin AI")
-            v_desc = st.text_area("Description", placeholder="Deep Indian Accent, Calm Tone")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🧬 INITIATE CLONING", key="btn_clone", use_container_width=True):
-                if audio and v_name:
+        # --- FIX FOR SCREENSHOT 2 (White Box Removed) ---
+        # Instead of st.code, we use styled HTML
+        calibration_html = "<br>".join(CALIBRATION_SENTENCES)
+        st.markdown(f"""
+        <div style="background-color: rgba(0, 0, 0, 0.4); border: 2px solid #D60000; border-radius: 10px; padding: 15px; color: white; font-family: monospace;">
+            {calibration_html}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        audio = mic_recorder(start_prompt="🔴 RECORD CALIBRATION", stop_prompt="⏹️ STOP", key='recorder')
+        if audio: 
+            st.audio(audio['bytes'])
+            st.success("✅ Voice Sample Captured")
+        
+    with c_set:
+        st.markdown("#### 2. Forge Identity")
+        v_name = st.text_input("Voice Name", placeholder="e.g. Nitin AI")
+        v_desc = st.text_area("Description", placeholder="Deep Indian Accent, Calm Tone")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🧬 INITIATE CLONING", key="btn_clone", use_container_width=True):
+            if api_key and audio and v_name:
+                # Import ElevenLabs here to avoid crash if not installed
+                try:
+                    from elevenlabs.client import ElevenLabs
+                    client = ElevenLabs(api_key=api_key)
+                    
                     with st.spinner("Uploading to Neural Cloud..."):
-                        try:
-                            voice = client.clone(name=v_name, description=v_desc, files=[io.BytesIO(audio['bytes'])])
-                            smrv_data = create_smrv_file(voice.voice_id, v_name, v_desc)
-                            st.success(f"✅ Voice Cloned! ID: {voice.voice_id}")
-                            st.download_button("⬇️ DOWNLOAD .SMRV", smrv_data, f"{v_name}.smrv", use_container_width=True)
-                        except Exception as e: st.error(f"Error: {e}")
+                        voice = client.clone(name=v_name, description=v_desc, files=[io.BytesIO(audio['bytes'])])
+                        smrv_data = create_smrv_file(voice.voice_id, v_name, v_desc)
+                        st.success(f"✅ Voice Cloned! ID: {voice.voice_id}")
+                        st.download_button("⬇️ DOWNLOAD .SMRV", smrv_data, f"{v_name}.smrv", use_container_width=True)
+                except ImportError:
+                    st.error("Please install elevenlabs: pip install elevenlabs")
+                except Exception as e: st.error(f"Error: {e}")
+            elif not api_key:
+                st.error("Missing API Key.")
 
 # === TAB 3: SOUL MANAGER (Use Cloned Voice) ===
 with tab_god:
     st.markdown("<br>", unsafe_allow_html=True)
     
-    if not api_key:
-        st.error("⚠️ Connect API Key first.")
-    else:
-        client = ElevenLabs(api_key=api_key)
+    col_up, col_tts = st.columns([1, 2])
+    with col_up:
+        st.markdown("#### 1. Load Soul (.smrv)")
         
-        col_up, col_tts = st.columns([1, 2])
-        with col_up:
-            st.markdown("#### 1. Load Soul (.smrv)")
-            uploaded_file = st.file_uploader("", type=["smrv"])
-            active_id = None
-            if uploaded_file:
-                soul = read_smrv_file(uploaded_file)
-                if soul:
-                    st.success(f"🔹 ACTIVE: {soul['name']}")
-                    active_id = soul['voice_id']
+        # This area is now styled by the CSS #7 above to be Dark/Transparent
+        uploaded_file = st.file_uploader("", type=["smrv"])
+        
+        active_id = None
+        if uploaded_file:
+            soul = read_smrv_file(uploaded_file)
+            if soul:
+                st.markdown(f"""
+                <div style="background: #D60000; padding: 10px; border-radius: 5px; text-align: center;">
+                    <b>🔹 ACTIVE: {soul['name']}</b>
+                </div>
+                """, unsafe_allow_html=True)
+                active_id = soul['voice_id']
 
-        with col_tts:
-            st.markdown("#### 2. Text-to-Speech")
-            god_text = st.text_area("Script", height=150, placeholder="I can now speak with the cloned voice.", key="god_txt")
-            
-            if st.button("🚀 SPEAK (GOD MODE)", key="btn_god", use_container_width=True):
-                if active_id and god_text:
+    with col_tts:
+        st.markdown("#### 2. Text-to-Speech")
+        god_text = st.text_area("Script", height=150, placeholder="I can now speak with the cloned voice.", key="god_txt")
+        
+        if st.button("🚀 SPEAK (GOD MODE)", key="btn_god", use_container_width=True):
+            if active_id and god_text and api_key:
+                try:
+                    from elevenlabs.client import ElevenLabs
+                    client = ElevenLabs(api_key=api_key)
                     with st.spinner("Synthesizing..."):
-                        try:
-                            audio_stream = client.generate(text=god_text, voice=active_id, model="eleven_multilingual_v2")
-                            audio_bytes = b"".join(audio_stream)
-                            st.audio(audio_bytes, format='audio/mp3')
-                            st.download_button("⬇️ DOWNLOAD CLONE", audio_bytes, "clone.mp3")
-                        except Exception as e: st.error(f"Error: {e}")
+                        audio_stream = client.generate(text=god_text, voice=active_id, model="eleven_multilingual_v2")
+                        audio_bytes = b"".join(audio_stream)
+                        st.audio(audio_bytes, format='audio/mp3')
+                        st.download_button("⬇️ DOWNLOAD CLONE", audio_bytes, "clone.mp3")
+                except Exception as e: st.error(f"Error: {e}")
+            elif not api_key:
+                st.error("API Key required.")
 
 # FOOTER
 st.markdown("""
