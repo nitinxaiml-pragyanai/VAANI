@@ -4,6 +4,7 @@ import asyncio
 import io
 import json
 import zipfile
+import random
 from elevenlabs.client import ElevenLabs
 from streamlit_mic_recorder import mic_recorder
 
@@ -16,10 +17,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# THE ROYAL BLUE & RED THEME
+# THE ULTRA-PREMIUM CSS PATCH
 st.markdown("""
 <style>
-    /* 1. GLOBAL TEXT RESET */
+    /* 1. GLOBAL FONT & COLOR */
     .stApp, p, h1, h2, h3, h4, h5, label, span, div, li, button, small {
         font-family: 'Inter', sans-serif !important;
         color: #ffffff !important;
@@ -38,23 +39,55 @@ st.markdown("""
         color: white !important;
         border-radius: 10px;
     }
+    
+    /* 4. DROPDOWN MENUS (The "White Box" Fix) */
+    /* This forces the selector box to be dark */
     div[data-baseweb="select"] > div {
         background-color: rgba(0, 0, 0, 0.4) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    
-    /* 4. DROPDOWN MENUS (Dark Blue) */
+    /* This forces the popup list to be Dark Blue */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul {
         background-color: #001f3f !important;
     }
     li[role="option"] {
         color: white !important;
+        background-color: transparent !important;
+    }
+    li[role="option"]:hover {
+        background-color: #ff007f !important; /* Pink Highlight */
     }
 
-    /* 5. BUTTONS (ROYAL RED / PINK GRADIENT) */
+    /* 5. TABS (The "Ugly Rectangle" Fix) */
+    /* Remove the default ugly line */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: rgba(0,0,0,0.2);
+        padding: 10px 20px;
+        border-radius: 30px; /* Pill Shape */
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    /* Style the individual tabs */
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: transparent;
+        border-radius: 20px;
+        color: white;
+        font-weight: 600;
+        border: none;
+    }
+    /* The Active Tab (Pink Pill) */
+    .stTabs [aria-selected="true"] {
+        background-color: #ff007f !important;
+        color: white !important;
+        box-shadow: 0 0 15px rgba(255, 0, 127, 0.5);
+    }
+
+    /* 6. BUTTONS (ROYAL RED / PINK GRADIENT) */
     div.stButton > button {
-        background: linear-gradient(90deg, #ff007f, #ff4081) !important; /* The Red/Pink you wanted */
+        background: linear-gradient(90deg, #ff007f, #ff4081) !important;
         border: none !important;
         color: white !important;
         font-weight: bold !important;
@@ -65,16 +98,6 @@ st.markdown("""
     div.stButton > button:hover {
         transform: scale(1.02);
         box-shadow: 0 0 20px #ff007f;
-    }
-
-    /* TABS */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px; background-color: rgba(0,0,0,0.2);
-        padding: 10px; border-radius: 15px;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #ff007f !important;
-        color: white !important;
     }
 
     /* FOOTER */
@@ -91,7 +114,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. VOICE DATABASE (20 Preinstalled Voices)
+# 2. VOICE DATABASE
 # ==========================================
 FREE_VOICES = {
     "🇮🇳 India - Prabhat (Male)": "en-IN-PrabhatNeural",
@@ -115,6 +138,15 @@ FREE_VOICES = {
     "🇮🇳 Hindi - Swara": "hi-IN-SwaraNeural",
     "🇮🇳 Hindi - Madhur": "hi-IN-MadhurNeural"
 }
+
+# THE PHONETIC SCRIPT (To crack the voice style)
+CALIBRATION_SENTENCES = [
+    "1. The quick brown fox jumps over the lazy dog. (Captures Speed)",
+    "2. Sphinx of black quartz, judge my vow. (Captures Pitch)",
+    "3. How vexingly quick daft zebras jump! (Captures Accent)",
+    "4. Pack my box with five dozen liquor jugs. (Captures Depth)",
+    "5. I am recording my voice for the Samrion Neural Engine. (Captures Identity)"
+]
 
 # ==========================================
 # 3. HELPER FUNCTIONS
@@ -152,7 +184,7 @@ st.title("🎙️ VANI OMEGA")
 st.markdown("### The Ultimate Voice Ecosystem")
 
 # TABS FOR MODES
-tab_std, tab_clone, tab_god = st.tabs(["🗣️ Vani Standard (Free)", "🧬 God Mode (Cloning)", "💾 Soul Manager"])
+tab_std, tab_clone, tab_god = st.tabs(["🗣️ Vani Standard", "🧬 God Mode (Cloning)", "💾 Soul Manager"])
 
 # === TAB 1: STANDARD (EdgeTTS - 20 Voices) ===
 with tab_std:
@@ -192,16 +224,25 @@ with tab_clone:
         
         c_rec, c_set = st.columns(2)
         with c_rec:
-            st.markdown("#### 1. Record Target Voice")
-            st.info("Record 1 minute of clear audio for 100% accuracy.")
-            audio = mic_recorder(start_prompt="🔴 REC", stop_prompt="⏹️ STOP", key='recorder')
-            if audio: st.audio(audio['bytes'])
+            st.markdown("#### 1. Phonetic Calibration")
+            st.info("⚠️ READ THIS EXACTLY to crack your voice style:")
+            
+            # THE NEW CALIBRATION BOX
+            calibration_text = "\n".join(CALIBRATION_SENTENCES)
+            st.code(calibration_text, language="text")
+            
+            st.markdown("---")
+            audio = mic_recorder(start_prompt="🔴 RECORD CALIBRATION", stop_prompt="⏹️ STOP", key='recorder')
+            if audio: 
+                st.audio(audio['bytes'])
+                st.success("✅ Voice Sample Captured")
             
         with c_set:
             st.markdown("#### 2. Forge Identity")
             v_name = st.text_input("Voice Name", placeholder="e.g. Nitin AI")
-            v_desc = st.text_area("Description", placeholder="Deep Indian Accent")
+            v_desc = st.text_area("Description", placeholder="Deep Indian Accent, Calm Tone")
             
+            st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🧬 INITIATE CLONING", key="btn_clone", use_container_width=True):
                 if audio and v_name:
                     with st.spinner("Uploading to Neural Cloud..."):
@@ -209,7 +250,7 @@ with tab_clone:
                             voice = client.clone(name=v_name, description=v_desc, files=[io.BytesIO(audio['bytes'])])
                             smrv_data = create_smrv_file(voice.voice_id, v_name, v_desc)
                             st.success(f"✅ Voice Cloned! ID: {voice.voice_id}")
-                            st.download_button("⬇️ DOWNLOAD .SMRV", smrv_data, f"{v_name}.smrv")
+                            st.download_button("⬇️ DOWNLOAD .SMRV", smrv_data, f"{v_name}.smrv", use_container_width=True)
                         except Exception as e: st.error(f"Error: {e}")
 
 # === TAB 3: SOUL MANAGER (Use Cloned Voice) ===
