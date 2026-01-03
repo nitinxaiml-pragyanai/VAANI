@@ -7,9 +7,6 @@ import zipfile
 import random
 from streamlit_mic_recorder import mic_recorder
 
-# If you have the elevenlabs library installed, uncomment below
-# from elevenlabs.client import ElevenLabs
-
 # ==========================================
 # 1. CONFIGURATION & ROYAL THEME
 # ==========================================
@@ -30,33 +27,33 @@ st.markdown("""
 
     /* 2. BACKGROUND: ROYAL BLUE THEME */
     .stApp {
-        background: linear-gradient(135deg, #020024 0%, #090979 35%, #00d4ff 100%); /* Fallback */
-        background: linear-gradient(to bottom right, #001540, #002d72, #001540); /* Deep Royal Blue */
+        background: linear-gradient(135deg, #020024 0%, #090979 35%, #00d4ff 100%);
+        background: linear-gradient(to bottom right, #001540, #002d72, #001540);
         background-attachment: fixed;
     }
 
     /* 3. INPUTS (Glass Style - Dark Blue) */
     .stTextInput > div > div > input, .stTextArea > div > div > textarea {
-        background-color: rgba(0, 20, 60, 0.6) !important; /* Dark Royal Blue */
-        border: 1px solid #ff0000; /* Red Border */
+        background-color: rgba(0, 20, 60, 0.6) !important;
+        border: 1px solid #ff0000;
         color: white !important;
         border-radius: 8px;
     }
     
-    /* 4. DROPDOWN MENUS (Fixing White Box) */
+    /* 4. DROPDOWN MENUS */
     div[data-baseweb="select"] > div {
         background-color: rgba(0, 20, 60, 0.8) !important;
         color: white !important;
         border: 1px solid #ff0000;
     }
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul {
-        background-color: #001540 !important; /* Menu Background */
+        background-color: #001540 !important;
     }
     li[role="option"]:hover {
-        background-color: #D60000 !important; /* Red Highlight */
+        background-color: #D60000 !important;
     }
 
-    /* 5. TABS (Royal Blue & Red) */
+    /* 5. TABS */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: rgba(0,0,0,0.3);
@@ -72,13 +69,12 @@ st.markdown("""
         font-weight: 600;
         border: none;
     }
-    /* The Active Tab (Red Pill) */
     .stTabs [aria-selected="true"] {
-        background-color: #D60000 !important; /* Royal Red */
+        background-color: #D60000 !important;
         box-shadow: 0 0 15px rgba(214, 0, 0, 0.6);
     }
 
-    /* 6. BUTTONS (ROYAL RED GRADIENT) */
+    /* 6. BUTTONS */
     div.stButton > button {
         background: linear-gradient(90deg, #D60000, #ff4d4d) !important;
         border: none !important;
@@ -93,7 +89,7 @@ st.markdown("""
         box-shadow: 0 0 20px #ff0000;
     }
 
-    /* 7. FILE UPLOADER FIX (Screenshot 1 Fix) */
+    /* 7. FILE UPLOADER FIX */
     [data-testid='stFileUploader'] {
         background-color: rgba(0, 20, 60, 0.5);
         border: 1px dashed #ff0000;
@@ -101,7 +97,7 @@ st.markdown("""
         padding: 20px;
     }
     [data-testid='stFileUploader'] section {
-        background-color: transparent !important; /* Removes the white box */
+        background-color: transparent !important;
     }
     [data-testid='stFileUploader'] button {
          background: transparent !important;
@@ -122,7 +118,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. VOICE DATABASE (20 VOICES)
+# 2. VOICE DATABASE
 # ==========================================
 FREE_VOICES = {
     "🇮🇳 India - Prabhat (Male)": "en-IN-PrabhatNeural",
@@ -147,7 +143,6 @@ FREE_VOICES = {
     "🇮🇳 Hindi - Madhur": "hi-IN-MadhurNeural"
 }
 
-# THE PHONETIC SCRIPT
 CALIBRATION_SENTENCES = [
     "1. The quick brown fox jumps over the lazy dog.",
     "2. Sphinx of black quartz, judge my vow.",
@@ -191,10 +186,9 @@ def read_smrv_file(uploaded_file):
 st.title(" VANI ")
 st.markdown("### The Royal Voice Ecosystem")
 
-# TABS FOR MODES
 tab_std, tab_clone, tab_god = st.tabs([" Vani", "Cloning", "💾 Voice Manager"])
 
-# === TAB 1: STANDARD (EdgeTTS - 20 Voices) ===
+# === TAB 1: STANDARD (EdgeTTS) ===
 with tab_std:
     st.markdown("<br>", unsafe_allow_html=True)
     c1, c2 = st.columns([2, 1])
@@ -205,7 +199,6 @@ with tab_std:
     
     with c2:
         st.markdown("#### 🎛️ Settings")
-        # Ensure label matches the request
         selected_voice = st.selectbox("Choose Voice Model (20 Available)", list(FREE_VOICES.keys()))
         voice_code = FREE_VOICES[selected_voice]
         
@@ -229,14 +222,11 @@ with tab_clone:
     if not api_key:
         st.warning("⚠️ God Mode requires an ElevenLabs API Key in secrets.")
     
-    # We define layout regardless of key to show UI
     c_rec, c_set = st.columns(2)
     with c_rec:
         st.markdown("#### 1. Phonetic Calibration")
         st.info("⚠️ READ THIS EXACTLY to crack your voice style:")
         
-        # --- FIX FOR SCREENSHOT 2 (White Box Removed) ---
-        # Instead of st.code, we use styled HTML
         calibration_html = "<br>".join(CALIBRATION_SENTENCES)
         st.markdown(f"""
         <div style="background-color: rgba(0, 0, 0, 0.4); border: 2px solid #D60000; border-radius: 10px; padding: 15px; color: white; font-family: monospace;">
@@ -258,31 +248,41 @@ with tab_clone:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🧬 INITIATE CLONING", key="btn_clone", use_container_width=True):
             if api_key and audio and v_name:
-                # Import ElevenLabs here to avoid crash if not installed
                 try:
+                    # --- FIXED CLONING LOGIC FOR V1.0+ SDK ---
                     from elevenlabs.client import ElevenLabs
                     client = ElevenLabs(api_key=api_key)
                     
                     with st.spinner("Uploading to Neural Cloud..."):
-                        voice = client.clone(name=v_name, description=v_desc, files=[io.BytesIO(audio['bytes'])])
+                        # Convert bytes to a file-like object
+                        audio_file = io.BytesIO(audio['bytes'])
+                        audio_file.name = "sample.wav" # Give it a name so SDK treats it as a file
+
+                        # USE client.voices.add INSTEAD OF client.clone
+                        voice = client.voices.add(
+                            name=v_name, 
+                            description=v_desc, 
+                            files=[audio_file]
+                        )
+                        
                         smrv_data = create_smrv_file(voice.voice_id, v_name, v_desc)
                         st.success(f"✅ Voice Cloned! ID: {voice.voice_id}")
                         st.download_button("⬇️ DOWNLOAD .SMRV", smrv_data, f"{v_name}.smrv", use_container_width=True)
+                
                 except ImportError:
                     st.error("Please install elevenlabs: pip install elevenlabs")
-                except Exception as e: st.error(f"Error: {e}")
+                except Exception as e:
+                    st.error(f"Error: {e}")
             elif not api_key:
                 st.error("Missing API Key.")
 
-# === TAB 3: SOUL MANAGER (Use Cloned Voice) ===
+# === TAB 3: SOUL MANAGER ===
 with tab_god:
     st.markdown("<br>", unsafe_allow_html=True)
     
     col_up, col_tts = st.columns([1, 2])
     with col_up:
         st.markdown("#### 1. Load Soul (.smrv)")
-        
-        # This area is now styled by the CSS #7 above to be Dark/Transparent
         uploaded_file = st.file_uploader("", type=["smrv"])
         
         active_id = None
