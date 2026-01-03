@@ -5,6 +5,7 @@ import io
 import json
 import zipfile
 import random
+import requests  # <--- ADDED FOR DIRECT API CALLS
 from streamlit_mic_recorder import mic_recorder
 
 # ==========================================
@@ -214,7 +215,7 @@ with tab_std:
                     with open(out_file, "rb") as f:
                         st.download_button("⬇️ DOWNLOAD MP3", f, "vani_standard.mp3")
 
-# === TAB 2: GOD MODE (ElevenLabs Cloning) ===
+# === TAB 2: GOD MODE (Direct API Cloning) ===
 with tab_clone:
     st.markdown("<br>", unsafe_allow_html=True)
     
@@ -248,31 +249,36 @@ with tab_clone:
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🧬 INITIATE CLONING", key="btn_clone", use_container_width=True):
             if api_key and audio and v_name:
-                try:
-                    # --- FIXED CLONING LOGIC FOR V1.0+ SDK ---
-                    from elevenlabs.client import ElevenLabs
-                    client = ElevenLabs(api_key=api_key)
-                    
-                    with st.spinner("Uploading to Neural Cloud..."):
-                        # Convert bytes to a file-like object
-                        audio_file = io.BytesIO(audio['bytes'])
-                        audio_file.name = "sample.wav" # Give it a name so SDK treats it as a file
-
-                        # USE client.voices.add INSTEAD OF client.clone
-                        voice = client.voices.add(
-                            name=v_name, 
-                            description=v_desc, 
-                            files=[audio_file]
-                        )
+                with st.spinner("Uploading to Neural Cloud (Direct API)..."):
+                    try:
+                        # === DIRECT API APPROACH (BYPASS SDK) ===
+                        url = "https://api.elevenlabs.io/v1/voices/add"
                         
-                        smrv_data = create_smrv_file(voice.voice_id, v_name, v_desc)
-                        st.success(f"✅ Voice Cloned! ID: {voice.voice_id}")
-                        st.download_button("⬇️ DOWNLOAD .SMRV", smrv_data, f"{v_name}.smrv", use_container_width=True)
-                
-                except ImportError:
-                    st.error("Please install elevenlabs: pip install elevenlabs")
-                except Exception as e:
-                    st.error(f"Error: {e}")
+                        headers = {
+                            "xi-api-key": api_key
+                        }
+                        
+                        # Multipart Form Data
+                        files = {
+                            'files': ('sample.wav', audio['bytes'], 'audio/wav')
+                        }
+                        data = {
+                            'name': v_name,
+                            'description': v_desc
+                        }
+                        
+                        response = requests.post(url, headers=headers, data=data, files=files)
+                        
+                        if response.status_code == 200:
+                            voice_id = response.json().get('voice_id')
+                            smrv_data = create_smrv_file(voice_id, v_name, v_desc)
+                            st.success(f"✅ Voice Cloned Successfully! ID: {voice_id}")
+                            st.download_button("⬇️ DOWNLOAD .SMRV", smrv_data, f"{v_name}.smrv", use_container_width=True)
+                        else:
+                            st.error(f"Failed to clone: {response.text}")
+                            
+                    except Exception as e:
+                        st.error(f"Connection Error: {e}")
             elif not api_key:
                 st.error("Missing API Key.")
 
@@ -302,15 +308,35 @@ with tab_god:
         
         if st.button("🚀 SPEAK (GOD MODE)", key="btn_god", use_container_width=True):
             if active_id and god_text and api_key:
-                try:
-                    from elevenlabs.client import ElevenLabs
-                    client = ElevenLabs(api_key=api_key)
-                    with st.spinner("Synthesizing..."):
-                        audio_stream = client.generate(text=god_text, voice=active_id, model="eleven_multilingual_v2")
-                        audio_bytes = b"".join(audio_stream)
-                        st.audio(audio_bytes, format='audio/mp3')
-                        st.download_button("⬇️ DOWNLOAD CLONE", audio_bytes, "clone.mp3")
-                except Exception as e: st.error(f"Error: {e}")
+                with st.spinner("Synthesizing (Direct API)..."):
+                    try:
+                        # === DIRECT API GENERATION (ROBUST) ===
+                        # We use requests here too to match the robustness of the cloning tab
+                        url = f"https://api.elevenlabs.io/v1/text-to-speech/{active_id}"
+                        headers = {
+                            "Accept": "audio/mpeg",
+                            "Content-Type": "application/json",
+                            "xi-api-key": api_key
+                        }
+                        data = {
+                            "text": god_text,
+                            "model_id": "eleven_multilingual_v2",
+                            "voice_settings": {
+                                "stability": 0.5,
+                                "similarity_boost": 0.75
+                            }
+                        }
+                        
+                        response = requests.post(url, json=data, headers=headers)
+                        
+                        if response.status_code == 200:
+                            st.audio(response.content, format='audio/mp3')
+                            st.download_button("⬇️ DOWNLOAD CLONE", response.content, "clone.mp3")
+                        else:
+                            st.error(f"TTS Error: {response.text}")
+
+                    except Exception as e:
+                        st.error(f"Error: {e}")
             elif not api_key:
                 st.error("API Key required.")
 
