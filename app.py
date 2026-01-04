@@ -5,7 +5,7 @@ import io
 import json
 import zipfile
 import random
-import requests  # <--- ADDED FOR DIRECT API CALLS
+import requests  # <--- DIRECT API CONNECTION (STABLE)
 from streamlit_mic_recorder import mic_recorder
 
 # ==========================================
